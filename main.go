@@ -1,10 +1,8 @@
 /*
-
 Package redmine provides an API for interacting with a Redmine server.
 
 Note that this is a read-only API. There is not currently any support for
 updating information in Redmine.
-
 */
 package redmine
 
@@ -140,7 +138,7 @@ func NewSession(redmineUrl, username, password string) (Session, error) {
 		return session, err
 	}
 
-	log.Printf("got user: %s", user)
+	log.Printf("got user: %v", user)
 	session.apiKey = user.ApiKey
 
 	return session, nil
@@ -258,16 +256,23 @@ func (session *Session) UpdateIssue(id int, issue UpdateIssue) (err error) {
 	return err
 }
 
-// GetTimeEntries returns all time entries from a given number of days in the
-// past until now.
-func (session *Session) GetTimeEntries(daysBack int) ([]TimeEntry, error) {
+// GetTimeEntriesParams returns map which has parameters for /time_entries.json.
+func (session *Session) GetTimeEntriesParams(userID string, projectID string, daysBack int) map[string]string {
 	since := time.Now().AddDate(0, 0, -daysBack).Format("2006-01-02")
 	until := time.Now().Format("2006-01-02")
-	params := map[string]string{
-		"user_id":  "me",
-		"spent_on": "><" + since + "|" + until,
-		"limit":    "100"}
 
+	params := map[string]string{
+		"user_id":    userID,
+		"project_id": projectID,
+		"spent_on":   "><" + since + "|" + until,
+		"limit":      "100"}
+
+	return params
+}
+
+// GetTimeEntries returns all time entries from a given number of days in the
+// past until now.
+func (session *Session) GetTimeEntries(params map[string]string) ([]TimeEntry, error) {
 	var entries []TimeEntry
 	offset := 0
 
